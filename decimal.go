@@ -72,6 +72,14 @@ func New(value int64, exp int32) Decimal {
 	}
 }
 
+// NewFromBigInt returns a new fixed-point decimal, value * 10 ^ exp.
+func NewFromBigInt(value *big.Int, exp int32) Decimal {
+	return Decimal{
+		value: value,
+		exp:   exp,
+	}
+}
+
 // NewFromString returns a new Decimal from a string representation.
 //
 // Example:
@@ -311,6 +319,12 @@ func (d Decimal) Cmp(d2 Decimal) int {
 // Equals returns whether the numbers represented by d and d2 are equal.
 func (d Decimal) Equals(d2 Decimal) bool {
 	return d.Cmp(d2) == 0
+}
+
+// BigInt returns the internal big.Int of the decimal.
+func (d Decimal) BigInt() *big.Int {
+	d.ensureInitialized()
+	return d.value
 }
 
 // Exponent returns the exponent, or scale component of the decimal.
