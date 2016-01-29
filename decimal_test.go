@@ -718,6 +718,37 @@ func TestDecimal_Mod(t *testing.T) {
 	}
 }
 
+func TestDecimal_Sqrt(t *testing.T) {
+	type testData struct {
+		input    string
+		expected string
+	}
+	tests := []testData{
+		{"0", "0"},
+		{".12345678987654321122763812", "0.3513641841117891"},
+		{"4", "2"},
+		{"9", "3"},
+		{"100", "10"},
+		{"2454495034", "49542.8605754653613946"},
+		{"24544.95034", "156.6682812186308502"},
+		{"1234567898765432112.2763812", "1111111110.0000000055243715"},
+	}
+	for _, test := range tests {
+		d, err := NewFromString(test.input)
+		if err != nil {
+			t.FailNow()
+		}
+		expected, err := NewFromString(test.expected)
+		if err != nil {
+			t.FailNow()
+		}
+		got := d.Sqrt()
+		if !got.Equals(expected) {
+			t.Errorf("Sqrt(%s): got %s, expected %s", d, got, expected)
+		}
+	}
+}
+
 func TestDecimal_Overflow(t *testing.T) {
 	if !didPanic(func() { New(1, math.MinInt32).Mul(New(1, math.MinInt32)) }) {
 		t.Fatalf("should have gotten an overflow panic")

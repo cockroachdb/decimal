@@ -46,6 +46,8 @@ var DivisionPrecision = 16
 // Zero constant, to make computations faster.
 var Zero = New(0, 1)
 
+var half = New(5, -1)
+
 var zeroInt = big.NewInt(0)
 var oneInt = big.NewInt(1)
 var fiveInt = big.NewInt(5)
@@ -299,6 +301,44 @@ func (d Decimal) Div(d2 Decimal) Decimal {
 func (d Decimal) Mod(d2 Decimal) Decimal {
 	quo := d.Div(d2).Truncate(0)
 	return d.Sub(d2.Mul(quo))
+}
+
+// Sqrt returns the square root of d. The method will panic if d
+// is a negative number.
+//
+// The square root calculation is implemented using Newton's Method.
+// We start with an initial estimate for sqrt(d), and then iterate:
+//     x_{n+1} = 1/2 * ( x_n + (d / x_n) ).
+func (d Decimal) Sqrt() Decimal {
+	d.ensureInitialized()
+
+	// Validate the sign of d.
+	switch d.BigInt().Sign() {
+	case -1:
+		panic(fmt.Sprintf("square root of negative number: %v", d))
+	case 0:
+		return Zero
+	}
+
+	// Use half as the initial estimate.
+	x := d.Mul(half)
+
+	// Determine the maximum number of iterations needed.
+	scale := len(d.value.String())
+	if d.exp > 0 {
+		scale += int(d.exp)
+	}
+	steps := scale + DivisionPrecision
+
+	// Iterate.
+	for i := 0; i <= steps; i++ {
+		t := d.Div(x)   // t = d / x_n
+		t = x.Add(t)    // t = x_n + (d / x_n)
+		x = half.Mul(t) // x_{n+1} = 0.5 * t
+	}
+
+	// Round to the desired precision.
+	return x.Round(int32(DivisionPrecision))
 }
 
 // Cmp compares the numbers represented by d and d2 and returns:
